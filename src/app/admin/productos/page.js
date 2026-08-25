@@ -1,12 +1,13 @@
 // src/app/admin/productos/page.js
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 
-export default function AdminProductos() {
+// 🔥 Componente que usa useSearchParams (separado para Suspense)
+function ProductosContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filtro = searchParams.get('filtro') || 'todos';
@@ -55,16 +56,12 @@ export default function AdminProductos() {
 
   // 🔥 FILTROS ACTUALIZADOS
   const productosFiltrados = productos.filter((producto) => {
-    // Filtros básicos
     if (filtro === 'disponibles' && !producto.disponible) return false;
     if (filtro === 'agotados' && producto.disponible) return false;
     if (filtro === 'destacados' && !producto.destacado) return false;
-    
-    // 🔥 NUEVOS FILTROS DE INVENTARIO
     if (filtro === 'stockbajo' && !(producto.stock > 0 && producto.stock <= (producto.stock_minimo || 5))) return false;
     if (filtro === 'stocknormal' && !(producto.stock > (producto.stock_minimo || 5) && producto.disponible === 1)) return false;
     if (filtro === 'promocion' && !(producto.en_promocion === 1 && producto.disponible === 1)) return false;
-    
     return true;
   });
 
@@ -126,7 +123,6 @@ export default function AdminProductos() {
     }
   };
 
-  // 🔥 TÍTULOS DE FILTROS ACTUALIZADOS
   const getTituloFiltro = () => {
     switch(filtro) {
       case 'disponibles': return '✅ Productos Disponibles';
@@ -274,7 +270,6 @@ export default function AdminProductos() {
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#C9A45C'}>
                 ⭐ Destacados
               </a>
-              {/* 🔥 NUEVOS FILTROS */}
               <a href="/admin/productos?filtro=stockbajo" style={{
                 borderRadius: '9999px',
                 backgroundColor: '#FF9800',
@@ -538,5 +533,24 @@ export default function AdminProductos() {
       </main>
       <Footer />
     </>
+  );
+}
+
+// 🔥 Componente principal con Suspense
+export default function AdminProductos() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#F6F0EA',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <p>Cargando...</p>
+      </div>
+    }>
+      <ProductosContent />
+    </Suspense>
   );
 }
