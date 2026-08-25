@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.4",
     "better-sqlite3": "^13.0.3",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
