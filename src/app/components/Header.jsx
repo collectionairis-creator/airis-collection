@@ -1,9 +1,10 @@
-// src/app/components/Header.jsx
+// src/components/Header.jsx
 "use client";
 
 import Image from 'next/image';
 import { useState } from 'react';
 import { useCarrito } from '../context/CarritoContext';
+import Link from 'next/link';
 
 export default function Header() {
   const { contador, carrito, total, quitarDelCarrito, actualizarCantidad, abrirWhatsApp, formatearPrecio } = useCarrito();
@@ -28,7 +29,7 @@ export default function Header() {
           alignItems: 'center',
         }}>
           {/* LOGO */}
-          <a href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
             <Image
               src="/imagenes/identidad/logo-horizontal.png"
               alt="Airi's Collection"
@@ -37,7 +38,7 @@ export default function Header() {
               style={{ height: '35px', width: 'auto' }}
               priority
             />
-          </a>
+          </Link>
 
           {/* NAVEGACIÓN */}
           <nav style={{
@@ -47,7 +48,7 @@ export default function Header() {
           }}
           className="nav-desktop"
           >
-            <a href="/" style={{
+            <Link href="/" style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '0.8rem',
               fontWeight: '500',
@@ -55,8 +56,8 @@ export default function Header() {
               textDecoration: 'none',
             }}>
               Inicio
-            </a>
-            <a href="/catalogo" style={{
+            </Link>
+            <Link href="/catalogo" style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '0.8rem',
               fontWeight: '500',
@@ -64,8 +65,8 @@ export default function Header() {
               textDecoration: 'none',
             }}>
               Catálogo
-            </a>
-            <a href="/quienes-somos" style={{
+            </Link>
+            <Link href="/quienes-somos" style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '0.8rem',
               fontWeight: '500',
@@ -73,8 +74,8 @@ export default function Header() {
               textDecoration: 'none',
             }}>
               Quiénes somos
-            </a>
-            <a href="/contacto" style={{
+            </Link>
+            <Link href="/contacto" style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '0.8rem',
               fontWeight: '500',
@@ -82,7 +83,7 @@ export default function Header() {
               textDecoration: 'none',
             }}>
               Contacto
-            </a>
+            </Link>
           </nav>
 
           {/* CARRITO Y MENÚ MÓVIL */}
@@ -399,6 +400,26 @@ export default function Header() {
                 >
                   💬 Consultar pedido por WhatsApp
                 </button>
+                <Link href="/carrito" style={{
+                  borderRadius: '9999px',
+                  backgroundColor: '#E8A6AE',
+                  padding: '0.6rem 1rem',
+                  border: 'none',
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontSize: '0.85rem',
+                  fontWeight: '600',
+                  color: '#FFFFFF',
+                  textDecoration: 'none',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.3s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#D4959B'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#E8A6AE'}
+                onClick={() => setCarritoAbierto(false)}
+                >
+                  📋 Ver carrito completo
+                </Link>
               </div>
             </div>
           )}

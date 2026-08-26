@@ -1,7 +1,7 @@
-// src/app/context/CarritoContext.jsx
+// src/context/CarritoContext.js
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
 
 const CarritoContext = createContext();
 
@@ -9,92 +9,66 @@ export function CarritoProvider({ children }) {
   const [carrito, setCarrito] = useState([]);
   const [total, setTotal] = useState(0);
   const [contador, setContador] = useState(0);
-  const [cargado, setCargado] = useState(false);
 
   // Cargar carrito desde localStorage al iniciar
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const carritoGuardado = localStorage.getItem('carrito');
-      if (carritoGuardado) {
-        try {
-          const carritoParseado = JSON.parse(carritoGuardado);
-          // Asegurar que todos los productos tengan precioNum e imagenPrincipal
-          const carritoCorregido = carritoParseado.map(item => ({
-            ...item,
-            precioNum: parseFloat(item.precioNum) || 0,
-            imagenPrincipal: item.imagenPrincipal || '',
-          }));
-          setCarrito(carritoCorregido);
-          calcularTotales(carritoCorregido);
-        } catch (error) {
-          console.error('Error al cargar el carrito:', error);
-        }
+    const carritoGuardado = localStorage.getItem('carrito');
+    if (carritoGuardado) {
+      try {
+        setCarrito(JSON.parse(carritoGuardado));
+      } catch (e) {
+        console.error('Error al cargar carrito:', e);
       }
-      setCargado(true);
     }
   }, []);
 
   // Guardar carrito en localStorage cuando cambie
   useEffect(() => {
-    if (cargado && typeof window !== 'undefined') {
-      localStorage.setItem('carrito', JSON.stringify(carrito));
-      calcularTotales(carrito);
-    }
-  }, [carrito, cargado]);
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+    calcularTotalYContador();
+  }, [carrito]);
 
-  // Calcular total y contador
-  const calcularTotales = (items) => {
-    let nuevoTotal = 0;
-    let nuevoContador = 0;
-    items.forEach(item => {
-      const precioNum = parseFloat(item.precioNum) || 0;
-      const cantidad = parseInt(item.cantidad) || 0;
-      nuevoTotal += precioNum * cantidad;
-      nuevoContador += cantidad;
+  const calcularTotalYContador = () => {
+    let totalCarrito = 0;
+    let contadorItems = 0;
+    
+    carrito.forEach(item => {
+      const precioLimpio = item.precio?.replace(/[^0-9.]/g, '') || '0';
+      const precioNum = parseFloat(precioLimpio) || 0;
+      totalCarrito += precioNum * item.cantidad;
+      contadorItems += item.cantidad;
     });
-    setTotal(nuevoTotal);
-    setContador(nuevoContador);
+    
+    setTotal(totalCarrito);
+    setContador(contadorItems);
   };
 
-  // Agregar producto al carrito
+  const formatearPrecio = (precio) => {
+    const precioLimpio = precio?.toString().replace(/[^0-9.]/g, '') || '0';
+    return new Intl.NumberFormat('es-HN', {
+      style: 'currency',
+      currency: 'HNL',
+    }).format(parseFloat(precioLimpio) || 0);
+  };
+
   const agregarAlCarrito = (producto, cantidad = 1) => {
     setCarrito(prevCarrito => {
-      const productoExistente = prevCarrito.find(item => item.id === producto.id);
-      
-      // Asegurar que precioNum e imagenPrincipal existan
-      const precioNum = parseFloat(producto.precioNum) || 0;
-      const imagenPrincipal = producto.imagenPrincipal || '';
-      
-      const productoConPrecio = {
-        ...producto,
-        precioNum: precioNum,
-        imagenPrincipal: imagenPrincipal,
-        cantidad: cantidad,
-      };
-      
-      if (productoExistente) {
+      const existe = prevCarrito.find(item => item.id === producto.id);
+      if (existe) {
         return prevCarrito.map(item =>
           item.id === producto.id
-            ? { 
-                ...item, 
-                cantidad: item.cantidad + cantidad,
-                precioNum: parseFloat(item.precioNum) || 0,
-                imagenPrincipal: item.imagenPrincipal || '',
-              }
+            ? { ...item, cantidad: item.cantidad + cantidad }
             : item
         );
-      } else {
-        return [...prevCarrito, productoConPrecio];
       }
+      return [...prevCarrito, { ...producto, cantidad }];
     });
   };
 
-  // Quitar producto del carrito
   const quitarDelCarrito = (id) => {
     setCarrito(prevCarrito => prevCarrito.filter(item => item.id !== id));
   };
 
-  // Actualizar cantidad de un producto
   const actualizarCantidad = (id, nuevaCantidad) => {
     if (nuevaCantidad <= 0) {
       quitarDelCarrito(id);
@@ -102,68 +76,32 @@ export function CarritoProvider({ children }) {
     }
     setCarrito(prevCarrito =>
       prevCarrito.map(item =>
-        item.id === id 
-          ? { 
-              ...item, 
-              cantidad: nuevaCantidad,
-              precioNum: parseFloat(item.precioNum) || 0,
-              imagenPrincipal: item.imagenPrincipal || '',
-            } 
-          : item
+        item.id === id ? { ...item, cantidad: nuevaCantidad } : item
       )
     );
   };
 
-  // Vaciar el carrito
   const vaciarCarrito = () => {
     setCarrito([]);
   };
 
-  // Formatear precio
-  const formatearPrecio = (valor) => {
-    return `L. ${valor.toFixed(2)}`;
-  };
-
-  // Generar mensaje para WhatsApp
-  const generarMensajeWhatsApp = () => {
-    if (carrito.length === 0) return '';
-
-    let mensaje = '🦋 ¡Hola! Quisiera hacer un pedido en Airi\'s Collection 🦋\n\n';
-    mensaje += '📦 Mi pedido:\n';
-    mensaje += '─────────────────\n';
-    
-    carrito.forEach((item, index) => {
-      const precioNum = parseFloat(item.precioNum) || 0;
-      const subtotal = precioNum * (parseInt(item.cantidad) || 0);
-      mensaje += `${index + 1}. ${item.nombre}\n`;
-      mensaje += `   📍 Marca: ${item.marca || 'Airi\'s Collection'}\n`;
-      mensaje += `   💰 Precio: ${item.precio}\n`;
-      mensaje += `   🔢 Cantidad: ${item.cantidad}x\n`;
-      mensaje += `   📊 Subtotal: ${formatearPrecio(subtotal)}\n\n`;
-    });
-
-    mensaje += '─────────────────\n';
-    mensaje += `💰 *Total aproximado:* ${formatearPrecio(total)}\n\n`;
-    mensaje += '💳 Métodos de pago disponibles:\n';
-    mensaje += '   💵 Efectivo\n';
-    mensaje += '   🏦 Transferencia bancaria\n\n';
-    mensaje += '📌 Por favor confirmar:\n';
-    mensaje += '   ✅ Disponibilidad de productos\n';
-    mensaje += '   ✅ Total del pedido\n';
-    mensaje += '   ✅ Método de pago\n\n';
-    mensaje += '¡Espero su respuesta! 🙌';
-
-    return mensaje;
-  };
-
-  // Abrir WhatsApp con el mensaje
   const abrirWhatsApp = () => {
-    const mensaje = generarMensajeWhatsApp();
-    if (!mensaje) {
-      alert('El carrito está vacío');
-      return;
-    }
-    const url = `https://wa.me/50488633658?text=${encodeURIComponent(mensaje)}`;
+    if (carrito.length === 0) return;
+    
+    let mensaje = '🛍️ *Pedido Airi\'s Collection*%0A%0A';
+    carrito.forEach((item, index) => {
+      const precioLimpio = item.precio?.replace(/[^0-9.]/g, '') || '0';
+      const subtotal = (parseFloat(precioLimpio) || 0) * item.cantidad;
+      mensaje += `${index + 1}. *${item.nombre}* x${item.cantidad} = ${formatearPrecio(subtotal.toString())}%0A`;
+    });
+    mensaje += `%0A*Total: ${formatearPrecio(total.toString())}*%0A%0A`;
+    mensaje += '📦 *Datos de entrega:*%0A';
+    mensaje += 'Nombre: %0A';
+    mensaje += 'Dirección: %0A';
+    mensaje += 'Teléfono: %0A';
+    mensaje += '%0A🙏 ¡Gracias por tu compra!';
+
+    const url = `https://wa.me/50488633658?text=${mensaje}`;
     window.open(url, '_blank');
   };
 
@@ -176,8 +114,8 @@ export function CarritoProvider({ children }) {
       quitarDelCarrito,
       actualizarCantidad,
       vaciarCarrito,
-      abrirWhatsApp,
       formatearPrecio,
+      abrirWhatsApp,
     }}>
       {children}
     </CarritoContext.Provider>

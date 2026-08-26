@@ -226,6 +226,7 @@ export default function ProductoPage() {
                       objectFit: 'contain',
                     }}
                     priority
+                    unoptimized={imagenes[indiceImagen]?.startsWith('https://') || false}
                   />
                   
                   {imagenes.length > 1 && (
