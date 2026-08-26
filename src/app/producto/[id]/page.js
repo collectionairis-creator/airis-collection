@@ -40,13 +40,22 @@ export default function ProductoPage() {
     cargarProducto();
   }, [id]);
 
+  // 🔥 Función para optimizar imagen
+  const optimizarImagen = (url) => {
+    if (!url) return '';
+    if (url.includes('supabase.co')) {
+      return `${url}?width=600&height=600&resize=contain&quality=80`;
+    }
+    return url;
+  };
+
   const obtenerImagenes = () => {
     if (!producto) return [];
     const imagenes = [];
-    if (producto.imagenPrincipal) imagenes.push(producto.imagenPrincipal);
-    if (producto.imagen2) imagenes.push(producto.imagen2);
-    if (producto.imagen3) imagenes.push(producto.imagen3);
-    if (producto.imagen4) imagenes.push(producto.imagen4);
+    if (producto.imagenPrincipal) imagenes.push(optimizarImagen(producto.imagenPrincipal));
+    if (producto.imagen2) imagenes.push(optimizarImagen(producto.imagen2));
+    if (producto.imagen3) imagenes.push(optimizarImagen(producto.imagen3));
+    if (producto.imagen4) imagenes.push(optimizarImagen(producto.imagen4));
     return imagenes;
   };
 
@@ -217,8 +226,8 @@ export default function ProductoPage() {
                   <Image
                     src={imagenes[indiceImagen]}
                     alt={`${producto.nombre} - Imagen ${indiceImagen + 1}`}
-                    width={500}
-                    height={500}
+                    width={600}
+                    height={600}
                     style={{
                       width: '100%',
                       height: 'auto',

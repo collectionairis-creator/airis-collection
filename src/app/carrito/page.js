@@ -9,6 +9,15 @@ import Link from 'next/link';
 export default function CarritoPage() {
   const { carrito, total, quitarDelCarrito, actualizarCantidad, vaciarCarrito, formatearPrecio, abrirWhatsApp } = useCarrito();
 
+  // 🔥 Función para optimizar imagen
+  const optimizarImagen = (url) => {
+    if (!url) return '';
+    if (url.includes('supabase.co')) {
+      return `${url}?width=60&height=60&resize=contain&quality=80`;
+    }
+    return url;
+  };
+
   if (carrito.length === 0) {
     return (
       <>
@@ -107,10 +116,10 @@ export default function CarritoPage() {
                   borderBottom: '1px solid rgba(0,0,0,0.06)',
                 }}
               >
-                {/* 🔥 IMAGEN DEL PRODUCTO EN EL CARRITO */}
+                {/* 🔥 IMAGEN OPTIMIZADA EN EL CARRITO */}
                 {item.imagenPrincipal ? (
                   <img
-                    src={item.imagenPrincipal}
+                    src={optimizarImagen(item.imagenPrincipal)}
                     alt={item.nombre}
                     style={{
                       width: '60px',

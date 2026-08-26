@@ -1,4 +1,4 @@
-// src/components/Header.jsx
+// src/app/components/Header.jsx
 "use client";
 
 import Image from 'next/image';
@@ -9,6 +9,15 @@ import Link from 'next/link';
 export default function Header() {
   const { contador, carrito, total, quitarDelCarrito, actualizarCantidad, abrirWhatsApp, formatearPrecio } = useCarrito();
   const [carritoAbierto, setCarritoAbierto] = useState(false);
+
+  // 🔥 Función para optimizar imagen
+  const optimizarImagen = (url) => {
+    if (!url) return '';
+    if (url.includes('supabase.co')) {
+      return `${url}?width=60&height=60&resize=contain&quality=80`;
+    }
+    return url;
+  };
 
   return (
     <>
@@ -134,7 +143,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* PANEL DEL CARRITO - CON IMÁGENES DE PRODUCTOS */}
+      {/* PANEL DEL CARRITO - CON IMÁGENES OPTIMIZADAS */}
       {carritoAbierto && (
         <div style={{
           position: 'fixed',
@@ -232,7 +241,7 @@ export default function Header() {
                       borderBottom: '1px solid rgba(0,0,0,0.04)',
                     }}
                   >
-                    {/* 🔥 IMAGEN DEL PRODUCTO EN EL CARRITO */}
+                    {/* 🔥 IMAGEN OPTIMIZADA EN EL CARRITO */}
                     <div style={{
                       width: '40px',
                       height: '40px',
@@ -246,7 +255,7 @@ export default function Header() {
                     }}>
                       {item.imagenPrincipal ? (
                         <img
-                          src={item.imagenPrincipal}
+                          src={optimizarImagen(item.imagenPrincipal)}
                           alt={item.nombre}
                           style={{
                             width: '100%',

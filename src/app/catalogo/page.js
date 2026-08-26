@@ -142,6 +142,15 @@ export default function Catalogo() {
     'Accesorios': '👜',
   };
 
+  // 🔥 Función para optimizar imagen
+  const optimizarImagen = (url) => {
+    if (!url) return '';
+    if (url.includes('supabase.co')) {
+      return `${url}?width=300&height=300&resize=contain&quality=80`;
+    }
+    return url;
+  };
+
   if (cargando) {
     return (
       <>
@@ -472,9 +481,10 @@ export default function Catalogo() {
                       </div>
                     )}
 
+                    {/* 🔥 IMAGEN OPTIMIZADA */}
                     {producto.imagenPrincipal ? (
                       <img
-                        src={producto.imagenPrincipal}
+                        src={optimizarImagen(producto.imagenPrincipal)}
                         alt={producto.nombre}
                         style={{
                           width: '100%',
@@ -485,6 +495,7 @@ export default function Catalogo() {
                           marginBottom: '0.3rem',
                           backgroundColor: '#F6F0EA',
                         }}
+                        loading="lazy"
                       />
                     ) : (
                       <div style={{ fontSize: '3.5rem', marginBottom: '0.3rem' }}>
@@ -512,7 +523,6 @@ export default function Catalogo() {
                       {producto.marca}
                     </p>
 
-                    {/* 🔥 PRECIO CON PROMOCIÓN */}
                     <div style={{ marginBottom: '0.3rem' }}>
                       {producto.en_promocion === 1 && producto.precio_original ? (
                         <>

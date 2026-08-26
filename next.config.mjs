@@ -1,6 +1,11 @@
+// next.config.mjs
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  /* config options here */
+  images: {
+    domains: [
+      'qxfxlfvwcdskhxtkennt.supabase.co',
+    ],
+  },
 };
 
 export default nextConfig;
