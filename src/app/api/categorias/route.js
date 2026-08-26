@@ -1,46 +1,36 @@
 // src/app/api/categorias/route.js
-import db from '@/lib/db';
+import { supabase } from '@/lib/supabase';
 
 // GET - Obtener todas las categorías con sus subcategorías
 export async function GET() {
   try {
-    const categorias = db.prepare(`
-      SELECT c.*, 
-        json_group_array(
-          json_object('id', s.id, 'nombre', s.nombre)
-        ) as subcategorias
-      FROM categorias c
-      LEFT JOIN subcategorias s ON s.categoria_id = c.id
-      GROUP BY c.id
-      ORDER BY c.id DESC
-    `).all();
+    // Obtener categorías
+    const { data: categorias, error: errorCategorias } = await supabase
+      .from('categorias')
+      .select('*')
+      .order('id', { ascending: true });
 
-    const resultado = categorias.map(c => {
-      let subcategorias = [];
-      let subcategorias_ids = [];
-      
-      if (c.subcategorias) {
-        try {
-          const parsed = JSON.parse(c.subcategorias);
-          // Filtrar el primer elemento que puede ser null
-          const filtered = parsed.filter(s => s !== null);
-          subcategorias = filtered.map(s => s.nombre);
-          subcategorias_ids = filtered.map(s => s.id);
-        } catch (e) {
-          subcategorias = [];
-          subcategorias_ids = [];
-        }
-      }
-      
-      return {
-        ...c,
-        subcategorias,
-        subcategorias_ids
-      };
-    });
+    if (errorCategorias) throw errorCategorias;
+
+    // Obtener subcategorías
+    const { data: subcategorias, error: errorSubcategorias } = await supabase
+      .from('subcategorias')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (errorSubcategorias) throw errorSubcategorias;
+
+    // Combinar categorías con sus subcategorías
+    const resultado = categorias.map(cat => ({
+      ...cat,
+      subcategorias: subcategorias
+        .filter(sub => sub.categoria_id === cat.id)
+        .map(sub => sub.nombre)
+    }));
 
     return Response.json(resultado);
   } catch (error) {
+    console.error('Error GET /api/categorias:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
@@ -48,20 +38,19 @@ export async function GET() {
 // POST - Crear una nueva categoría
 export async function POST(request) {
   try {
-    const { nombre } = await request.json();
-    
-    if (!nombre || nombre.trim() === '') {
-      return Response.json({ error: 'El nombre es requerido' }, { status: 400 });
-    }
+    const body = await request.json();
+    const { nombre } = body;
 
-    const stmt = db.prepare('INSERT INTO categorias (nombre) VALUES (?)');
-    const result = stmt.run(nombre.trim());
+    const { data, error } = await supabase
+      .from('categorias')
+      .insert([{ nombre }])
+      .select();
 
-    return Response.json({ success: true, id: result.lastInsertRowid });
+    if (error) throw error;
+
+    return Response.json({ success: true, id: data?.[0]?.id });
   } catch (error) {
-    if (error.message.includes('UNIQUE')) {
-      return Response.json({ error: 'Esta categoría ya existe' }, { status: 400 });
-    }
+    console.error('Error POST /api/categorias:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
@@ -69,17 +58,32 @@ export async function POST(request) {
 // DELETE - Eliminar una categoría
 export async function DELETE(request) {
   try {
-    const { id } = await request.json();
-    // Las subcategorías se eliminan automáticamente por ON DELETE CASCADE
-    const stmt = db.prepare('DELETE FROM categorias WHERE id = ?');
-    const result = stmt.run(id);
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
 
-    if (result.changes === 0) {
-      return Response.json({ error: 'Categoría no encontrada' }, { status: 404 });
+    if (!id) {
+      return Response.json({ error: 'ID de categoría requerido' }, { status: 400 });
     }
+
+    // Primero eliminar subcategorías relacionadas
+    const { error: errorSub } = await supabase
+      .from('subcategorias')
+      .delete()
+      .eq('categoria_id', id);
+
+    if (errorSub) throw errorSub;
+
+    // Luego eliminar la categoría
+    const { error } = await supabase
+      .from('categorias')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
 
     return Response.json({ success: true });
   } catch (error) {
+    console.error('Error DELETE /api/categorias:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
